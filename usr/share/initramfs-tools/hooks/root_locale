@@ -1,0 +1,46 @@
+#! /bin/sh -e
+
+# Adds support for the system default locale to the initramfs
+# and stores the locale name in the initramfs /conf/conf.d/root_locale
+# so that the premount script can pick it up through $ROOT_LOCALE
+
+PREREQ=""
+
+prereqs () {
+	echo "$PREREQ"
+}
+
+case $1 in
+prereqs)
+	prereqs
+	exit 0
+	;;
+esac
+
+. /usr/share/initramfs-tools/hook-functions
+
+CONF="$DESTDIR/conf/conf.d/root_locale"
+
+# Accept overrides but will rewrite the initramfs conf file anyway
+[ -r $CONF ] && . $CONF
+rm -f $CONF
+
+# Base the locale on the system default LANG and mangle it as
+# needed to match the /usr/lib/locale naming.
+
+[ -r /etc/default/locale ] && . /etc/default/locale
+
+[ -z "$ROOT_LOCALE" ] && ROOT_LOCALE=`echo $LANG | sed -e 's/UTF/utf/' -e 's/utf-8/utf8/'`
+
+if [ -n "$ROOT_LOCALE" ] && [ -d /usr/lib/locale/$ROOT_LOCALE ]; then
+	[ "${verbose}" = "y" ] && echo "Adding locale: $ROOT_LOCALE"
+	mkdir -p "$DESTDIR/usr/lib/locale"
+	cp -r /usr/lib/locale/$ROOT_LOCALE "$DESTDIR/usr/lib/locale"
+	echo "ROOT_LOCALE=$ROOT_LOCALE" > $CONF
+	echo "export ROOT_LOCALE" >> $CONF
+	echo "export FSTYPE" >> $CONF
+else
+	echo "Warning: No support for locale: $ROOT_LOCALE" >&2
+fi
+
+exit 0

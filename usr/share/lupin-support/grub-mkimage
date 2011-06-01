@@ -1,0 +1,108 @@
+#! /bin/sh
+
+# grub-install helper script for lupin. This script will upgrade
+# the grub bootloader installed on the host (wubildr).
+#
+# Copyright (C) Agostino Russo
+#
+# Lupin is free software; you can redistribute it and/or modify
+# it under the terms of the GNU Lesser General Public License as
+# published by the Free Software Foundation; either version 2.1 of
+# the License, or (at your option) any later version.
+#
+# Lupin is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU Lesser General Public License for more details.
+#
+# You should have received a copy of the GNU Lesser General Public License
+# along with this program.  If not, see <http://www.gnu.org/licenses/>.
+
+prefix=
+test_only=false
+
+for option in "$@"; do
+    case "$option" in
+    --prefix=*)
+        prefix=`echo "$option" | sed 's/--prefix=//'` ;;
+    --test)
+	test_only=: ;;
+    esac
+done
+
+GRUB_DEVICE_BOOT="`grub-probe --target=device /boot`"
+case ${GRUB_DEVICE_BOOT} in
+  /dev/loop/*|/dev/loop[0-9])
+    loop_file=`losetup ${GRUB_DEVICE_BOOT} | sed -e "s/^[^(]*(\([^)]\+\)).*/\1/"`
+  ;;
+esac
+
+# Is /boot loop-mounted from a file on another filesystem?
+if [ "x${loop_file}" = x ] || [ ! -f "${loop_file}" ]; then
+  exit 1
+fi
+
+mtpt="${loop_file%/*}"
+while [ -n "$mtpt" ]; do
+    while read DEV MTPT FSTYPE OPTS REST; do
+        if [ "$MTPT" = "$mtpt" ]; then
+            loop_file=${loop_file#$MTPT}
+            host_mountpoint=$MTPT
+            break
+        fi
+    done < /proc/mounts
+    mtpt="${mtpt%/*}"
+    [ -z "$host_mountpoint" ] || break
+done
+
+if [ "x${host_mountpoint}" = x ]; then
+    exit 1
+fi
+
+target="${host_mountpoint}/wubildr"
+
+if [ ! -f "$target" ]; then
+    exit 1
+fi
+
+if $test_only; then
+    exit 0
+fi
+
+# TODO You might want to have this as a proper file somewhere in /usr/share
+lupin_embedded_cfg=$(tempfile)
+cat << EOF >> $lupin_embedded_cfg
+set show_panic_message=true
+if search -s -f -n $loop_file; then
+    if loopback loop0 $loop_file; then
+        set root=(loop0)
+        if [ -e /boot/grub/grub.cfg ]; then
+            if configfile /boot/grub/grub.cfg; then
+                set show_panic_message=false
+            fi
+        else
+            if [ -e /grub/grub.cfg ]; then
+                if configfile /grub/grub.cfg; then
+                    set show_panic_message=false
+                fi
+            fi
+        fi
+    fi
+fi
+if [ \${show_panic_message} = true ]; then
+    echo "It is not possible to boot from the Ubuntu image."
+    echo "The Windows partition might be corrupted."
+    echo "Please reboot into Windows and run: chkdsk /r"
+    echo "Then try again."
+fi
+EOF
+
+# Watch the modules order!
+modules=" \
+    loadenv biosdisk part_msdos part_gpt fat ntfs ext2 ntfscomp iso9660 loopback \
+    search linux boot minicmd cat cpuid chain halt help ls reboot \
+    echo test configfile sh sleep"
+
+grub-mkimage ${prefix:+--prefix="$prefix"} -c $lupin_embedded_cfg $modules | cat /usr/lib/grub/i386-pc/lnxboot.img - > "$target.new"
+mv "$target.new" "$target"
+rm $lupin_embedded_cfg || true

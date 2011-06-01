@@ -1,0 +1,18 @@
+#! /bin/sh
+
+case $1 in
+prereqs)
+	exit 0
+	;;
+esac
+
+if [ "$FSTYPE" = "ntfs" ] && [ -n "$ROOT_LOCALE" ]; then
+   if [ -z "${ROOTFLAGS}" ]; then
+     ROOTFLAGS="-o "
+   else
+     ROOTFLAGS="${ROOTFLAGS},"
+   fi
+   echo ROOTFLAGS=\"${ROOTFLAGS}locale=$ROOT_LOCALE\" >> /conf/param.conf
+fi
+
+exit 0

@@ -1,0 +1,56 @@
+#! /bin/sh
+
+# This implements just enough of grub-probe for Wubi to keep grub-install
+# happy. The results of this are not actually used in practice, as we
+# implement our own grub-mkimage.
+#
+# Copyright (C) 2009 Canonical Ltd.
+#
+# Lupin is free software; you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation; either version 2 of the License, or
+# (at your option) any later version.
+#
+# Lupin is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with Lupin; if not, write to the Free Software
+# Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA
+# 02110-1301, USA.
+
+target=
+device_option=
+device=
+
+for option in "$@"; do
+    case "$option" in
+    --target=*)
+	target=`echo "$option" | sed 's/--target=//'` ;;
+    --device)
+	device_option="${option}" ;;
+    -*)
+	;;
+    *)
+	device="${option}" ;;
+    esac
+done
+
+if [ "x${device_option}" = x ]; then
+    exec grub-probe "$@"
+fi
+
+case "$target" in
+    fs)
+	echo ext2 ;;
+    partmap)
+	echo part_msdos ;;
+    abstraction)
+	;;
+    drive)
+	echo '(loop0)' ;;
+esac
+
+exit 0
