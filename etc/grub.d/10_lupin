@@ -20,6 +20,8 @@
 # You should have received a copy of the GNU General Public License
 # along with GRUB.  If not, see <http://www.gnu.org/licenses/>.
 
+export PATH=$PATH
+
 prefix=/usr
 exec_prefix=${prefix}
 libdir=${exec_prefix}/lib
