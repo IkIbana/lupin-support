@@ -46,7 +46,7 @@ case "$target" in
     fs)
 	echo ext2 ;;
     partmap)
-	echo part_msdos ;;
+	echo msdos ;;
     abstraction)
 	;;
     drive)
