@@ -1,7 +1,7 @@
 #! /bin/sh
 
-# grub-install wrapper for use in Wubi installations. This arranges for the
-# grub bootloader installed on the host (wubildr) to be reinstalled rather
+# grub-install wrapper for use in YINST.EXE installations. This arranges for the
+# grub bootloader installed on the host (yldr) to be reinstalled rather
 # than installing it to a boot sector.
 #
 # To get at the real MBR if you wish to do so, use grub-install.real

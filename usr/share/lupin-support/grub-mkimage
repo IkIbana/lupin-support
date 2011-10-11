@@ -1,7 +1,7 @@
 #! /bin/sh
 
 # grub-install helper script for lupin. This script will upgrade
-# the grub bootloader installed on the host (wubildr).
+# the grub bootloader installed on the host (yldr).
 #
 # Copyright (C) Agostino Russo
 #
@@ -22,10 +22,10 @@ newns () {
     [ "$LUPIN_NEWNS" ] || exec /usr/lib/lupin-support/newns "$0" "$@"
 }
 
-# Look for wubildr on all partitions of BIOS-accessible disk devices.
+# Look for yldr on all partitions of BIOS-accessible disk devices.
 # We can safely ignore the hibernation case here, because the Windows boot
 # loader boots straight into Windows if Windows was hibernated.
-find_wubildr () {
+find_yldr () {
     local partitions=
     for disk in $(grub-mkdevicemap -m - | cut -f2); do
         disk="$(readlink -f "$disk")" || continue
@@ -35,7 +35,7 @@ find_wubildr () {
             partition="/dev/$(udevadm info -q name -p "$syspartition" 2>/dev/null)" || continue
             fs="$(grub-probe -t fs -d "$partition" 2>/dev/null)" || continue
             [ "$fs" = fat ] || [ "$fs" = ntfs ] || continue
-            if [ "$(grub-fstest "$partition" ls /wubildr 2>/dev/null)" ]; then
+            if [ "$(grub-fstest "$partition" ls /yldr 2>/dev/null)" ]; then
                 partitions="${partitions:+$partitions }$partition"
             fi
         done
@@ -98,13 +98,13 @@ if [ "x${host_mountpoint}" = x ]; then
     exit 1
 fi
 
-target="${host_mountpoint}/wubildr"
+target="${host_mountpoint}/yldr"
 
 if $test_only; then
     if [ -f "$target" ]; then
         # Found on this partition
         exit 0
-    elif [ "$(find_wubildr)" ]; then
+    elif [ "$(find_yldr)" ]; then
         # Found on some other partition
         exit 0
     else
@@ -113,16 +113,16 @@ if $test_only; then
     fi
 fi
 
-wubildr_partitions="$(find_wubildr)"
+yldr_partitions="$(find_yldr)"
 
-if [ ! -f "$target" ] && [ -z "$wubildr_partitions" ]; then
+if [ ! -f "$target" ] && [ -z "$yldr_partitions" ]; then
     exit 1
 fi
 
 # TODO You might want to have this as a proper file somewhere in /usr/share
 tmp="$(mktemp -dt)"
-echo 'normal (memdisk)/wubildr.cfg' > "$tmp/wubildr-bootstrap.cfg"
-cat << EOF > "$tmp/wubildr.cfg"
+echo 'normal (memdisk)/yldr.cfg' > "$tmp/yldr-bootstrap.cfg"
+cat << EOF > "$tmp/yldr.cfg"
 set show_panic_message=true
 if search -s -f -n $loop_file; then
     if loopback loop0 $loop_file; then
@@ -147,7 +147,7 @@ if [ \${show_panic_message} = true ]; then
     echo "Then try again."
 fi
 EOF
-(cd "$tmp" && tar cf wubildr.tar wubildr.cfg)
+(cd "$tmp" && tar cf yldr.tar yldr.cfg)
 
 # Watch the modules order!
 modules=" \
@@ -156,16 +156,16 @@ modules=" \
     echo test configfile normal sleep memdisk tar font gfxterm gettext true \
     vbe vga video_bochs video_cirrus"
 
-grub-mkimage -O i386-pc ${prefix:+--prefix="$prefix"} -c "$tmp/wubildr-bootstrap.cfg" -m "$tmp/wubildr.tar" $modules | cat /usr/lib/grub/i386-pc/lnxboot.img - > "$tmp/wubildr"
+grub-mkimage -O i386-pc ${prefix:+--prefix="$prefix"} -c "$tmp/yldr-bootstrap.cfg" -m "$tmp/yldr.tar" $modules | cat /usr/lib/grub/i386-pc/lnxboot.img - > "$tmp/yldr"
 
 if [ -f "$target" ]; then
-    cp -af "$tmp/wubildr" "$target.new"
+    cp -af "$tmp/yldr" "$target.new"
     mv -f "$target.new" "$target"
 fi
 
 grep ^/dev/ /proc/mounts | parse_proc_mounts >"$tmp/mounted-map"
 mkdir -p "$tmp/mnt"
-for partition in $wubildr_partitions; do
+for partition in $yldr_partitions; do
     if grep -q "^$partition " "$tmp/mounted-map"; then
         mpoint="$(grep "^$partition " "$tmp/mounted-map" | head -n1 | cut -d' ' -f2)"
         mpoint="$(unescape_mount "$mpoint")"
@@ -176,9 +176,9 @@ for partition in $wubildr_partitions; do
         mount "$partition" "$tmp/mnt" 2>/dev/null || continue
         mpoint="$tmp/mnt"
     fi
-    if [ -f "$mpoint/wubildr" ]; then
-        cp -af "$tmp/wubildr" "$mpoint/wubildr.new"
-        mv -f "$mpoint/wubildr.new" "$mpoint/wubildr"
+    if [ -f "$mpoint/yldr" ]; then
+        cp -af "$tmp/yldr" "$mpoint/yldr.new"
+        mv -f "$mpoint/yldr.new" "$mpoint/yldr"
     fi
     if ! grep -q "^$partition " "$tmp/mounted-map"; then
         umount "$tmp/mnt" || true
