@@ -93,8 +93,8 @@ linux_entry ()
   case $mode in
       recovery)
              title="$(gettext_quoted "%s, with Linux %s (recovery mode)")" ;;
-     nomodeset)
-             title="$(gettext_quoted "%s, with Linux %s (nomodeset mode)")" ;;
+     xforcevesa)
+             title="$(gettext_quoted "%s, with Linux %s (xforcevesa mode)")" ;;
       normal|*)
              title="$(gettext_quoted "%s, with Linux %s")"
   esac
@@ -218,8 +218,8 @@ while [ "x$list" != "x" ] ; do
   fi
 
   if [ "x${GRUB_DISABLE_LINUX_NOMODESET}" != "xtrue" ]; then
-          linux_entry "${OS}" "${version}" nomodeset \
-            "nomodeset ${GRUB_CMDLINE_LINUX} ${GRUB_CMDLINE_EXTRA} ${GRUB_CMDLINE_LINUX_DEFAULT}" \
+          linux_entry "${OS}" "${version}" xforcevesa \
+            "nomodeset xforcevesa ${GRUB_CMDLINE_LINUX} ${GRUB_CMDLINE_EXTRA} ${GRUB_CMDLINE_LINUX_DEFAULT}" \
            quiet
   fi
 
