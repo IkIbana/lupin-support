@@ -214,7 +214,7 @@ while [ "x$list" != "x" ] ; do
       quiet
   if [ "x${GRUB_DISABLE_RECOVERY}" != "xtrue" ]; then
   	linux_entry "${OS}" "${version}" recovery \
-	"single ${GRUB_CMDLINE_LINUX}"
+	"recovery ${GRUB_CMDLINE_LINUX}"
   fi
 
   if [ "x${GRUB_DISABLE_LINUX_NOMODESET}" != "xtrue" ]; then
