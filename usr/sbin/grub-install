@@ -1,6 +1,6 @@
 #! /bin/sh
 
-# grub-install wrapper for use in YINST.EXE installations. This arranges for the
+# grub-install wrapper for use in SWIN.exe installations. This arranges for the
 # grub bootloader installed on the host (yldr) to be reinstalled rather
 # than installing it to a boot sector.
 #

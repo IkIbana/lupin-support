@@ -128,20 +128,26 @@ if search -s -f -n $loop_file; then
     if loopback loop0 $loop_file; then
         set root=(loop0)
         if [ -e /boot/grub/grub.cfg ]; then
+	    set prefix=(loop0)/boot/grub
             if configfile /boot/grub/grub.cfg; then
                 set show_panic_message=false
             fi
-        else
-            if [ -e /grub/grub.cfg ]; then
+	elif [ -e /grub/grub.cfg ]; then
+		set prefix=(loop0)/grub
                 if configfile /grub/grub.cfg; then
                     set show_panic_message=false
                 fi
-            fi
+	else
+               if search -s -f -n /startos/install/yldr-disk.cfg; then
+                       if configfile /startos/install/yldr-disk.cfg; then
+                               set show_panic_message=false
+                       fi
+               fi
         fi
     fi
 fi
 if [ \${show_panic_message} = true ]; then
-    echo "It is not possible to boot from the YlmfOS image."
+    echo "It is not possible to boot from the StartOS image."
     echo "The Windows partition might be corrupted."
     echo "Please reboot into Windows and run: chkdsk /r"
     echo "Then try again."
@@ -156,7 +162,7 @@ modules=" \
     echo test configfile normal sleep memdisk tar font gfxterm gettext true \
     vbe vga video_bochs video_cirrus"
 
-grub-mkimage -O i386-pc ${prefix:+--prefix="$prefix"} -c "$tmp/yldr-bootstrap.cfg" -m "$tmp/yldr.tar" $modules | cat /usr/lib/grub/i386-pc/lnxboot.img - > "$tmp/yldr"
+s="$( ((grub-mkimage -O i386-pc ${prefix:+--prefix="$prefix"} -c "$tmp/yldr-bootstrap.cfg" -m "$tmp/yldr.tar" $modules; echo $? >&3) | cat /usr/lib/grub/i386-pc/lnxboot.img - > "$tmp/yldr") 3>&1)"; [ "$s" = 0 ]
 
 if [ -f "$target" ]; then
     cp -af "$tmp/yldr" "$target.new"

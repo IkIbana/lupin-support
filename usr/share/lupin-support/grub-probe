@@ -1,6 +1,6 @@
 #! /bin/sh
 
-# This implements just enough of grub-probe for Wubi to keep grub-install
+# This implements just enough of grub-probe for SWIN.exe to keep grub-install
 # happy. The results of this are not actually used in practice, as we
 # implement our own grub-mkimage.
 #
