@@ -19,7 +19,7 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 newns () {
-    [ "$LUPIN_NEWNS" ] || exec /usr/lib/lupin-support/newns "$0" "$@"
+    [ "$LUPIN_NEWNS" ] || exec /usr/sbin/newns "$0" "$@"
 }
 
 # Look for yldr on all partitions of BIOS-accessible disk devices.

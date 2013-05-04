@@ -21,22 +21,23 @@ esac
 . /usr/share/initramfs-tools/hook-functions
 
 CONF="$DESTDIR/conf/conf.d/root_locale"
+LOCALE_DIR="/usr/lib#LIBDIRSUFFIX#/locale"
 
 # Accept overrides but will rewrite the initramfs conf file anyway
 [ -r $CONF ] && . $CONF
 rm -f $CONF
 
 # Base the locale on the system default LANG and mangle it as
-# needed to match the /usr/lib/locale naming.
+# needed to match the /usr/lib#LIBDIRSUFFIX#/locale naming.
 
 [ -r /etc/default/locale ] && . /etc/default/locale
 
 [ -z "$ROOT_LOCALE" ] && ROOT_LOCALE=`echo $LANG | sed -e 's/UTF/utf/' -e 's/utf-8/utf8/'`
 
-if [ -n "$ROOT_LOCALE" ] && [ -d /usr/lib/locale/$ROOT_LOCALE ]; then
+if [ -n "$ROOT_LOCALE" ] && [ -d $LOCALE_DIR/$ROOT_LOCALE ]; then
 	[ "${verbose}" = "y" ] && echo "Adding locale: $ROOT_LOCALE"
-	mkdir -p "$DESTDIR/usr/lib/locale"
-	cp -r /usr/lib/locale/$ROOT_LOCALE "$DESTDIR/usr/lib/locale"
+	mkdir -p "$DESTDIR/$LOCALE_DIR"
+	cp -r $LOCALE_DIR/$ROOT_LOCALE "$DESTDIR/$LOCALE_DIR"
 	echo "ROOT_LOCALE=$ROOT_LOCALE" > $CONF
 	echo "export ROOT_LOCALE" >> $CONF
 	echo "export FSTYPE" >> $CONF
