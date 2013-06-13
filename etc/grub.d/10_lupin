@@ -135,8 +135,6 @@ lupin_entry ()
       echo "	gfxmode \$linux_gfx_mode" | sed "s/^/$submenu_indentation/"
   fi
 
-  echo "	insmod gzio" | sed "s/^/$submenu_indentation/"
-
   if [ -z "${prepare_boot_cache}" ]; then
     prepare_boot_cache="$(prepare_grub_to_access_device ${GRUB_DEVICE_BOOT} | sed -e "s/^/\t/")"
   fi
